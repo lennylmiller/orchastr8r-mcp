@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../doc-gen-prompts"
+		},
+		{
+			"path": "../fi-recreation-mgr/docs"
+		}
+	],
+	"settings": {
+		"workbench.colorTheme": "Solarized Light"
+	}
+}

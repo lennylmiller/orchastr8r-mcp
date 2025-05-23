@@ -1,0 +1,5 @@
+Orchestr8r is the new name for the project (previously PROJECT-MGR placeholder and mcp-github-projects).
+seems to me if we come up with a name now, and refactor, and then get this working so we can debug into and make sure we have a development workflow setup using it as is with only a new mcp server name...
+
+
+
