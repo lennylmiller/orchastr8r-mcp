@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(export BUN_INSTALL=\"$HOME/.bun\")",
+      "Bash(export PATH=\"$BUN_INSTALL/bin:$PATH\")",
+      "Bash(bun run:*)",
+      "Bash(ls:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "mcp__orchestrat8r-mcp__update-project",
+      "mcp__orchestrat8r-mcp__add-draft-issue",
+      "mcp__orchestrat8r-mcp__create-project-field",
+      "mcp__orchestrat8r-mcp__update-project-field"
+    ],
+    "deny": []
+  }
+}

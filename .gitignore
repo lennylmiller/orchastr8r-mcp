@@ -38,3 +38,9 @@ claude_desktop_config.json
 
 # build output
 /build
+
+# Override global gitignore for Claude project files
+!CLAUDE.md
+!.claude/
+!claude-artifacts/
+!CLAUDE.local.md
