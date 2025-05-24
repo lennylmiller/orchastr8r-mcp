@@ -53,7 +53,7 @@ type GetProjectFieldsParams = typeof GetProjectFieldsSchema;
 
 const server = new McpServer(
 	{
-		name: "orchestr8r",
+		name: "orchestr8r-mcp",
 		version: "1.0.0",
 	},
 	{

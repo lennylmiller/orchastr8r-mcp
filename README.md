@@ -1,11 +1,13 @@
-# Orchestr8r
+# Orchestr8r MCP
 
-[![smithery badge](https://smithery.ai/badge/orchestr8r)](https://smithery.ai/server/orchestr8r)
+[![smithery badge](https://smithery.ai/badge/orchestr8r-mcp)](https://smithery.ai/server/orchestr8r-mcp)
+
+## Overview
 
 An AI-powered development orchestrator that seamlessly manages your GitHub Projects, automates workflows, and enhances your development lifecycle through intelligent assistance.
 
-<a href="https://glama.ai/mcp/servers/orchestr8r">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/orchestr8r/badge" alt="Orchestr8r MCP server" />
+<a href="https://glama.ai/mcp/servers/orchestr8r-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/orchestr8r-mcp/badge" alt="Orchestr8r MCP server" />
 </a>
 
 ## Vision
@@ -23,10 +25,10 @@ Orchestr8r aims to be your intelligent development companion, orchestrating the 
 
 ### Installing via Smithery
 
-To install Orchestr8r for Claude Desktop automatically via [Smithery](https://smithery.ai/server/orchestr8r):
+To install Orchestr8r for Claude Desktop automatically via [Smithery](https://smithery.ai/server/orchestr8r-mcp):
 
 ```bash
-npx -y @smithery/cli install orchestr8r --client claude
+npx -y @smithery/cli install orchestr8r-mcp --client claude
 ```
 
 ## Usage
@@ -35,8 +37,8 @@ npx -y @smithery/cli install orchestr8r --client claude
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/your-username/orchestr8r.git
-   cd orchestr8r
+   git clone https://github.com/your-username/orchestr8r-mcp.git
+   cd orchestr8r-mcp
    ```
 
 2. Install dependencies:
@@ -63,7 +65,7 @@ npx -y @smithery/cli install orchestr8r --client claude
     "Orchestr8r": {
       "command": "bun",
       "args": [
-        "/path/to/your/directory/orchestr8r/build/index.js"
+        "/path/to/your/directory/orchestr8r-mcp/build/index.js"
       ],
       "env": {
         "GITHUB_TOKEN": "your_github_personal_access_token",

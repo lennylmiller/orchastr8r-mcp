@@ -1,11 +1,11 @@
 {
-  "name": "orchestr8r",
+  "name": "orchestr8r-mcp",
   "version": "1.0.0",
   "description": "AI-powered development orchestrator for GitHub Projects and workflow automation",
   "main": "index.js",
   "type": "module",
   "bin": {
-    "orchestr8r": "./build/index.js"
+    "orchestr8r-mcp": "./build/index.js"
   },
   "files": [
     "build"
