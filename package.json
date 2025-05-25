@@ -17,7 +17,9 @@
     "debug": "bun run build:debug && node --inspect=9229 build/index.js",
     "debug:break": "bun run build:debug && node --inspect-brk=9229 build/index.js",
     "debug:bun": "bun run build:debug && bun --inspect=9229 build/index.js",
-    "debug:attach": "bun run build:debug"
+    "debug:attach": "bun run build:debug",
+    "test": "bun test",
+    "test:watch": "bun test --watch"
   },
   "keywords": [
     "github",
