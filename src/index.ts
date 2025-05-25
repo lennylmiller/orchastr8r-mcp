@@ -283,6 +283,7 @@ server.tool<ListProjectsParams>(
 	ListProjectsSchema,
 	async (params) => {
 		const result = await projectOperations.listProjects(params);
+		console.log("result-------------->>>>", result);
 		return {
 			content: [
 				{

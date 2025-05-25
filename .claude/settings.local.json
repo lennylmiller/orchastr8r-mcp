@@ -9,7 +9,10 @@
       "mcp__orchestrat8r-mcp__update-project",
       "mcp__orchestrat8r-mcp__add-draft-issue",
       "mcp__orchestrat8r-mcp__create-project-field",
-      "mcp__orchestrat8r-mcp__update-project-field"
+      "mcp__orchestrat8r-mcp__update-project-field",
+      "WebFetch(domain:modelcontextprotocol.io)",
+      "mcp__orchestrat8r-mcp__get-project",
+      "mcp__orchestrat8r-mcp__get-project-items"
     ],
     "deny": []
   }

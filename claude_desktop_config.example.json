@@ -1,10 +1,10 @@
 {
   "mcpServers": {
-    "Orchestr8r": {
-      "command": "bun",
-      "args": ["/path/to/orchestr8r-mcp/build/index.js"],
+    "orchestr8r-mcp": {
+      "command": "node",
+      "args": ["--inspect=9229", "/path/to/orchestr8r-mcp/build/index.js"],
       "env": {
-        "GITHUB_TOKEN": "your_token_here",
+        "GITHUB_TOKEN": "ghp_YOUR_TOKEN_HERE",
         "GITHUB_OWNER": "your_username_or_org"
       }
     }

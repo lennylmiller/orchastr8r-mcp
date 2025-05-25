@@ -11,7 +11,13 @@
     "build"
   ],
   "scripts": {
-    "build": "graphql-codegen && bunx tsx build.ts"
+    "build": "graphql-codegen && bunx tsx build.ts",
+    "build:debug": "graphql-codegen && bunx tsx build.debug.ts",
+    "dev": "bun --inspect src/index.ts",
+    "debug": "bun run build:debug && node --inspect=9229 build/index.js",
+    "debug:break": "bun run build:debug && node --inspect-brk=9229 build/index.js",
+    "debug:bun": "bun run build:debug && bun --inspect=9229 build/index.js",
+    "debug:attach": "bun run build:debug"
   },
   "keywords": [
     "github",

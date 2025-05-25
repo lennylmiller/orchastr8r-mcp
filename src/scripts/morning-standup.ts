@@ -12,6 +12,9 @@ import type {
   ProjectV2ItemFieldValue,
   ProjectV2SingleSelectFieldOptionColor 
 } from "../types/github-api-types.js";
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { join } from 'path';
+import { homedir } from 'os';
 
 // Project configuration
 const PROJECT_ID = 'PVT_kwHOAALNNc4A5x3U'; // Sprint Development - Orchestr8r
@@ -23,6 +26,16 @@ const STATUS_IDS: Record<string, string> = {
   'In Progress': '47fc9ee4',
   'Done': '98236657'
 };
+
+// Focus file location (stores primary focus item)
+const FOCUS_FILE = join(homedir(), '.orchestr8r-focus.json');
+
+interface FocusItem {
+  itemId: string;
+  title: string;
+  setAt: string;
+  projectId: string;
+}
 
 interface GroupedItem {
   id: string;
@@ -122,8 +135,8 @@ function groupItemsByStatus(items: ProjectV2Item[]): GroupedItems {
 /**
  * Format item for display
  */
-function formatItem(item: GroupedItem): string {
-  const parts = ['  •'];
+function formatItem(item: GroupedItem, isPrimaryFocus: boolean = false): string {
+  const parts = [isPrimaryFocus ? '  🎯' : '  •'];
   
   if (item.priority) {
     parts.push(`[${item.priority}]`);
@@ -133,6 +146,10 @@ function formatItem(item: GroupedItem): string {
   
   if (item.size) {
     parts.push(`(${item.size})`);
+  }
+  
+  if (isPrimaryFocus) {
+    parts.push('← PRIMARY FOCUS');
   }
   
   return parts.join(' ');
@@ -163,6 +180,48 @@ function sizeToPoints(size?: string): number {
 }
 
 /**
+ * Get current primary focus item
+ */
+function getPrimaryFocus(): FocusItem | null {
+  if (!existsSync(FOCUS_FILE)) {
+    return null;
+  }
+  
+  try {
+    const data = readFileSync(FOCUS_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Set primary focus item
+ */
+function setPrimaryFocus(item: GroupedItem): void {
+  const focus: FocusItem = {
+    itemId: item.id,
+    title: item.title,
+    setAt: new Date().toISOString(),
+    projectId: PROJECT_ID
+  };
+  
+  writeFileSync(FOCUS_FILE, JSON.stringify(focus, null, 2));
+  console.log(`\n🎯 Primary focus set to: "${item.title}"`);
+}
+
+/**
+ * Clear primary focus
+ */
+function clearPrimaryFocus(): void {
+  if (existsSync(FOCUS_FILE)) {
+    const focus = getPrimaryFocus();
+    writeFileSync(FOCUS_FILE, JSON.stringify({ ...focus, clearedAt: new Date().toISOString() }));
+    console.log('\n🎯 Primary focus cleared');
+  }
+}
+
+/**
  * Generate standup report
  */
 function generateStandupReport(groupedItems: GroupedItems, totalItems: number): void {
@@ -183,13 +242,30 @@ function generateStandupReport(groupedItems: GroupedItems, totalItems: number): 
 🏃‍♂️ Sprint Day ${sprintDay} of 14
 `);
 
+  // Show primary focus if set
+  const primaryFocus = getPrimaryFocus();
+  if (primaryFocus && primaryFocus.projectId === PROJECT_ID) {
+    const focusItem = [...groupedItems['In Progress'], ...groupedItems['Todo'], ...groupedItems['Blocked']]
+      .find(item => item.id === primaryFocus.itemId);
+    
+    if (focusItem) {
+      console.log(`🎯 PRIMARY FOCUS: "${focusItem.title}"`);
+      const focusTime = new Date(primaryFocus.setAt);
+      const hoursAgo = Math.floor((Date.now() - focusTime.getTime()) / (1000 * 60 * 60));
+      console.log(`   Set ${hoursAgo} hours ago\n`);
+    } else {
+      console.log(`🎯 PRIMARY FOCUS: "${primaryFocus.title}" (⚠️  Item not found in current sprint)\n`);
+    }
+  }
+
   // In Progress items
   console.log(`🏃 In Progress (${groupedItems['In Progress'].length}):`);
   if (groupedItems['In Progress'].length === 0) {
     console.log('   No items currently in progress');
   } else {
     groupedItems['In Progress'].forEach(item => {
-      console.log(formatItem(item));
+      const isPrimary = primaryFocus?.itemId === item.id;
+      console.log(formatItem(item, isPrimary));
     });
   }
   console.log('');
@@ -280,6 +356,60 @@ function generateStandupReport(groupedItems: GroupedItems, totalItems: number): 
  * Main function
  */
 async function main(): Promise<void> {
+  // Parse command line arguments
+  const args = process.argv.slice(2);
+  const command = args[0];
+  
+  // Handle focus commands
+  if (command === '--set-focus' || command === '-f') {
+    const itemId = args[1];
+    if (!itemId) {
+      console.error('Error: Please provide an item ID to set as focus');
+      console.log('Usage: bun run src/scripts/morning-standup.ts --set-focus ITEM_ID');
+      return;
+    }
+    
+    console.log('🔄 Setting primary focus...\n');
+    const items = await getProjectItems();
+    const groupedItems = groupItemsByStatus(items);
+    const allItems = [...groupedItems['In Progress'], ...groupedItems['Todo'], ...groupedItems['Blocked']];
+    const focusItem = allItems.find(item => item.id === itemId);
+    
+    if (focusItem) {
+      setPrimaryFocus(focusItem);
+    } else {
+      console.error(`Error: Item ${itemId} not found in project`);
+    }
+    return;
+  }
+  
+  if (command === '--clear-focus' || command === '-c') {
+    clearPrimaryFocus();
+    return;
+  }
+  
+  if (command === '--help' || command === '-h') {
+    console.log(`
+Morning Standup Script
+
+Usage:
+  bun run src/scripts/morning-standup.ts [options]
+
+Options:
+  (no options)              Show standup report
+  --set-focus, -f ITEM_ID   Set an item as primary focus
+  --clear-focus, -c         Clear primary focus
+  --help, -h                Show this help
+
+Examples:
+  bun run src/scripts/morning-standup.ts
+  bun run src/scripts/morning-standup.ts -f PVTI_lAHOAALNNc4A5x3UzgavmyQ
+  bun run src/scripts/morning-standup.ts --clear-focus
+`);
+    return;
+  }
+  
+  // Regular standup report
   console.log('🔄 Fetching project data...\n');
   
   try {
@@ -300,6 +430,15 @@ async function main(): Promise<void> {
     
     // Generate report
     generateStandupReport(groupedItems, items.length);
+    
+    // Show focus commands at the end
+    if (!getPrimaryFocus()) {
+      console.log('\n💡 Tip: Set a primary focus item with:');
+      const nextItem = groupedItems['In Progress'][0] || groupedItems['Todo'][0];
+      if (nextItem) {
+        console.log(`   bun run src/scripts/morning-standup.ts --set-focus ${nextItem.id}`);
+      }
+    }
     
   } catch (error) {
     console.error('Error generating standup report:', error);
