@@ -17,7 +17,8 @@
       "mcp__orchestrat8r-mcp__update-project-item-field",
       "mcp__orchestrat8r-mcp__bulk-update-project-item-field",
       "mcp__orchestrat8r-mcp__get-project-fields",
-      "Bash(bun test)"
+      "Bash(bun test)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }
