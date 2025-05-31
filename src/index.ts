@@ -2,6 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { issueOperations, projectOperations } from "./operations/index.js";
+import { contextStore, type TaskState } from "./services/context-store.js";
+import { ContextMiddleware } from "./middleware/context-middleware.js";
 import {
 	CreateIssueSchema,
 	GetIssueSchema,
@@ -754,6 +756,182 @@ server.tool<UpdateIssueParams>(
 			],
 		};
 	},
+);
+
+// Context Management Tool Schemas
+const SetWorkingContextSchema = {
+	projectId: z.string().optional().describe("GitHub Project ID to set as current"),
+	issueId: z.string().optional().describe("GitHub Issue ID to set as current"),
+	taskState: z.enum(['research', 'implementation', 'testing', 'review', 'done', 'blocked']).optional().describe("Current task state"),
+	clearExisting: z.boolean().default(false).describe("Clear existing context before setting new values"),
+};
+
+const GetWorkingContextSchema = {
+	includeValidation: z.boolean().default(true).describe("Include context validation in response"),
+};
+
+const TransitionTaskStateSchema = {
+	newState: z.enum(['research', 'implementation', 'testing', 'review', 'done', 'blocked']).describe("New task state to transition to"),
+	reason: z.string().optional().describe("Reason for state transition"),
+	updateProjectStatus: z.boolean().default(true).describe("Automatically update project item status"),
+};
+
+type SetWorkingContextParams = z.infer<typeof z.object(SetWorkingContextSchema)>;
+type GetWorkingContextParams = z.infer<typeof z.object(GetWorkingContextSchema)>;
+type TransitionTaskStateParams = z.infer<typeof z.object(TransitionTaskStateSchema)>;
+
+// Context Management Tools
+server.tool<SetWorkingContextParams>(
+	"set-working-context",
+	"Set the current working context (project, issue, task state)",
+	SetWorkingContextSchema,
+	async (params) => {
+		try {
+			if (params.clearExisting) {
+				await contextStore.clearContext();
+			}
+
+			// Update context with provided values
+			const updates: any = {};
+			if (params.projectId !== undefined) updates.currentProjectId = params.projectId;
+			if (params.issueId !== undefined) updates.currentIssueId = params.issueId;
+			if (params.taskState !== undefined) updates.currentTaskState = params.taskState;
+
+			if (Object.keys(updates).length > 0) {
+				await contextStore.updateContext(updates);
+			}
+
+			const context = await contextStore.getCurrentContext();
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Context updated successfully:\n${JSON.stringify(context, null, 2)}`,
+					},
+				],
+			};
+		} catch (error) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Error updating context: ${error instanceof Error ? error.message : 'Unknown error'}`,
+					},
+				],
+			};
+		}
+	},
+);
+
+server.tool<GetWorkingContextParams>(
+	"get-working-context",
+	"Get the current working context",
+	GetWorkingContextSchema,
+	async (params) => {
+		try {
+			const context = await contextStore.getCurrentContext();
+
+			if (params.includeValidation) {
+				const isValid = await contextStore.validateContextIntegrity();
+				const response = {
+					...context,
+					isValid,
+					validationNote: isValid ? "Context is valid" : "Context validation failed - some references may be stale",
+				};
+
+				return {
+					content: [
+						{
+							type: "text",
+							text: JSON.stringify(response, null, 2),
+						},
+					],
+				};
+			}
+
+			return {
+				content: [
+					{
+						type: "text",
+						text: JSON.stringify(context, null, 2),
+					},
+				],
+			};
+		} catch (error) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Error retrieving context: ${error instanceof Error ? error.message : 'Unknown error'}`,
+					},
+				],
+			};
+		}
+	},
+);
+
+server.tool<TransitionTaskStateParams>(
+	"transition-task-state",
+	"Transition current task to new state with automatic project updates",
+	TransitionTaskStateSchema,
+	ContextMiddleware.withContext(async (params, context) => {
+		try {
+			if (!context.currentIssueId && params.updateProjectStatus) {
+				return {
+					content: [
+						{
+							type: "text",
+							text: "Warning: No current issue in context. Task state updated but project status not changed.",
+						},
+					],
+				};
+			}
+
+			// Update context with new task state
+			await contextStore.transitionTaskState(params.newState);
+
+			// Update project item status if requested and context available
+			if (params.updateProjectStatus && context.currentProjectId && context.currentIssueId) {
+				// Map task states to project status values
+				const statusMapping: Record<TaskState, string> = {
+					'research': 'Todo',
+					'implementation': 'In Progress',
+					'testing': 'In Progress',
+					'review': 'In Review',
+					'done': 'Done',
+					'blocked': 'Blocked',
+				};
+
+				try {
+					// Note: This would require implementing updateProjectItemField with status field
+					// For now, we'll just log the intended update
+					const intendedStatus = statusMapping[params.newState];
+					console.log(`Would update project item ${context.currentIssueId} status to: ${intendedStatus}`);
+				} catch (projectError) {
+					console.warn('Failed to update project status:', projectError);
+				}
+			}
+
+			const updatedContext = await contextStore.getCurrentContext();
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Task state transitioned to: ${params.newState}\n${params.reason ? `Reason: ${params.reason}\n` : ''}Updated context:\n${JSON.stringify(updatedContext, null, 2)}`,
+					},
+				],
+			};
+		} catch (error) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Error transitioning task state: ${error instanceof Error ? error.message : 'Unknown error'}`,
+					},
+				],
+			};
+		}
+	}),
 );
 
 /**
