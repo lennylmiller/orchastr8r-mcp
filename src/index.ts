@@ -759,36 +759,32 @@ server.tool<UpdateIssueParams>(
 );
 
 // Context Management Tool Schemas
-const SetWorkingContextSchema = {
+const SetWorkingContextSchema = z.object({
 	projectId: z.string().optional().describe("GitHub Project ID to set as current"),
 	issueId: z.string().optional().describe("GitHub Issue ID to set as current"),
 	taskState: z.enum(['research', 'implementation', 'testing', 'review', 'done', 'blocked']).optional().describe("Current task state"),
 	clearExisting: z.boolean().default(false).describe("Clear existing context before setting new values"),
-};
+});
 
-const GetWorkingContextSchema = {
+const GetWorkingContextSchema = z.object({
 	includeValidation: z.boolean().default(true).describe("Include context validation in response"),
-};
+});
 
-const TransitionTaskStateSchema = {
+const TransitionTaskStateSchema = z.object({
 	newState: z.enum(['research', 'implementation', 'testing', 'review', 'done', 'blocked']).describe("New task state to transition to"),
 	reason: z.string().optional().describe("Reason for state transition"),
 	updateProjectStatus: z.boolean().default(true).describe("Automatically update project item status"),
-};
+});
 
-const SetWorkingContextSchemaObject = z.object(SetWorkingContextSchema);
-const GetWorkingContextSchemaObject = z.object(GetWorkingContextSchema);
-const TransitionTaskStateSchemaObject = z.object(TransitionTaskStateSchema);
-
-type SetWorkingContextParams = z.infer<typeof SetWorkingContextSchemaObject>;
-type GetWorkingContextParams = z.infer<typeof GetWorkingContextSchemaObject>;
-type TransitionTaskStateParams = z.infer<typeof TransitionTaskStateSchemaObject>;
+type SetWorkingContextParams = z.infer<typeof SetWorkingContextSchema>;
+type GetWorkingContextParams = z.infer<typeof GetWorkingContextSchema>;
+type TransitionTaskStateParams = z.infer<typeof TransitionTaskStateSchema>;
 
 // Context Management Tools
 server.tool<SetWorkingContextParams>(
 	"set-working-context",
 	"Set the current working context (project, issue, task state)",
-	SetWorkingContextSchemaObject,
+	SetWorkingContextSchema,
 	async (params) => {
 		try {
 			if (params.clearExisting) {
@@ -830,7 +826,7 @@ server.tool<SetWorkingContextParams>(
 server.tool<GetWorkingContextParams>(
 	"get-working-context",
 	"Get the current working context",
-	GetWorkingContextSchemaObject,
+	GetWorkingContextSchema,
 	async (params) => {
 		try {
 			const context = await contextStore.getCurrentContext();
@@ -877,7 +873,7 @@ server.tool<GetWorkingContextParams>(
 server.tool<TransitionTaskStateParams>(
 	"transition-task-state",
 	"Transition current task to new state with automatic project updates",
-	TransitionTaskStateSchemaObject,
+	TransitionTaskStateSchema,
 	ContextMiddleware.withContext(async (params, context) => {
 		try {
 			if (!context.currentIssueId && params.updateProjectStatus) {
