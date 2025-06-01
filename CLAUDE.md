@@ -19,6 +19,7 @@ Orchestr8r MCP is an MCP (Model Context Protocol) server that provides AI-powere
 - **Run tests**: `bun test`
 - **Watch tests**: `bun test --watch`
 - **Run specific test**: `bun test tests/operations/projects.test.ts`
+- **Coverage**: Tests located in `tests/` with setup in `tests/setup.ts`
 
 ### Automation Scripts
 - **Morning standup**: `bun run src/scripts/morning-standup.ts`
@@ -38,9 +39,12 @@ Orchestr8r MCP is an MCP (Model Context Protocol) server that provides AI-powere
 ### Key Components
 1. **Server Entry**: `src/index.ts` - MCP server initialization and tool registration (770 lines - needs refactoring)
 2. **GitHub Client**: `src/operations/github-client.ts` - Centralized GitHub API client
-3. **GraphQL Operations**: `src/graphql/` - GraphQL queries organized by domain
+3. **GraphQL Operations**: `src/graphql/` - GraphQL queries organized by domain (26+ queries)
 4. **Automation Scripts**: `src/scripts/` - Daily workflow automation
 5. **Type Generation**: Automated via graphql-codegen from `.graphql` files
+6. **Context Tracking**: `src/services/context-store.ts` - Persistent context management (v1.0)
+7. **Confidence Engine**: `src/confidence/` - FRVPOV scoring for task recommendations
+8. **Custom Build**: `build.ts` handles GraphQL file bundling with esbuild
 
 ### Environment Configuration
 Required environment variables:
@@ -83,6 +87,13 @@ The server exposes 29 tools for GitHub Projects management:
 4. **Testing**: Add tests for new operations in the appropriate test files
 5. **MCP Protocol**: Follow MCP specifications for tool and prompt definitions
 6. **Ship Daily**: Working code > Perfect architecture - deliver value every day
+
+## Current Development
+
+**Active Branch**: `feature/persistent-context-tracker-v1.0`
+- Implementing persistent context tracking functionality
+- Context stored in `.orchestr8r/context.json`
+- Tracks active project, issues, and workflow state
 
 ## Next Steps
 

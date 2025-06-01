@@ -21,7 +21,8 @@ describe('ContextStore', () => {
   });
 
   afterEach(async () => {
-    // Clean up test files
+    // Clear context and clean up test files
+    await contextStore.clearContext();
     try {
       await fs.unlink(testContextPath);
     } catch {

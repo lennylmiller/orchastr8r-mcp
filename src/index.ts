@@ -1,4 +1,31 @@
 
+// Load environment variables from .env file FIRST - before any other imports
+import fs from "fs";
+import path from "path";
+
+// Manually load .env file to avoid CommonJS/ESM issues
+try {
+  const envPath = path.join(process.cwd(), '.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+      const trimmedLine = line.trim();
+      if (trimmedLine && !trimmedLine.startsWith('#')) {
+        const [key, ...valueParts] = trimmedLine.split('=');
+        if (key && valueParts.length > 0) {
+          const value = valueParts.join('=').replace(/^["']|["']$/g, '');
+          process.env[key.trim()] = value;
+        }
+      }
+    });
+  }
+} catch (error) {
+  console.warn('Warning: Could not load .env file:', error);
+}
+
+// Environment variables loaded successfully
+
+// Now import everything else after environment variables are loaded
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -39,21 +66,21 @@ import {
 	UpdateProjectV2Schema,
 	UpdateProjectV2StatusUpdateSchema,
 } from "./operations/projects.js";
-import type {
+import {
 	GetRepositorySchema,
 	ListRepositoriesSchema,
 } from "./operations/repositories.js";
 
-type GetIssueParams = typeof GetIssueSchema;
-type ListIssuesParams = typeof ListIssuesSchema;
-type CreateIssueParams = typeof CreateIssueSchema;
-type UpdateIssueParams = typeof UpdateIssueSchema;
-type ListRepositoriesParams = typeof ListRepositoriesSchema;
-type GetRepositoryParams = typeof GetRepositorySchema;
-type GetProjectParams = typeof GetProjectSchema;
-type ListProjectsParams = typeof ListProjectsSchema;
-type GetProjectColumnsParams = typeof GetProjectColumnsSchema;
-type GetProjectFieldsParams = typeof GetProjectFieldsSchema;
+type GetIssueParams = z.infer<typeof GetIssueSchema>;
+type ListIssuesParams = z.infer<typeof ListIssuesSchema>;
+type CreateIssueParams = z.infer<typeof CreateIssueSchema>;
+type UpdateIssueParams = z.infer<typeof UpdateIssueSchema>;
+type ListRepositoriesParams = z.infer<typeof ListRepositoriesSchema>;
+type GetRepositoryParams = z.infer<typeof GetRepositorySchema>;
+type GetProjectParams = z.infer<typeof GetProjectSchema>;
+type ListProjectsParams = z.infer<typeof ListProjectsSchema>;
+type GetProjectColumnsParams = z.infer<typeof GetProjectColumnsSchema>;
+type GetProjectFieldsParams = z.infer<typeof GetProjectFieldsSchema>;
 
 const server = new McpServer(
 	{
@@ -761,26 +788,26 @@ server.tool<UpdateIssueParams>(
 );
 
 // Context Management Tool Schemas
-const SetWorkingContextSchema = {
+const SetWorkingContextSchema = z.object({
 	projectId: z.string().optional().describe("GitHub Project ID to set as current"),
 	issueId: z.string().optional().describe("GitHub Issue ID to set as current"),
 	taskState: z.enum(['research', 'implementation', 'testing', 'review', 'done', 'blocked']).optional().describe("Current task state"),
 	clearExisting: z.boolean().default(false).describe("Clear existing context before setting new values"),
-};
+});
 
-const GetWorkingContextSchema = {
+const GetWorkingContextSchema = z.object({
 	includeValidation: z.boolean().default(true).describe("Include context validation in response"),
-};
+});
 
-const TransitionTaskStateSchema = {
+const TransitionTaskStateSchema = z.object({
 	newState: z.enum(['research', 'implementation', 'testing', 'review', 'done', 'blocked']).describe("New task state to transition to"),
 	reason: z.string().optional().describe("Reason for state transition"),
 	updateProjectStatus: z.boolean().default(true).describe("Automatically update project item status"),
-};
+});
 
-type SetWorkingContextParams = typeof SetWorkingContextSchema;
-type GetWorkingContextParams = typeof GetWorkingContextSchema;
-type TransitionTaskStateParams = typeof TransitionTaskStateSchema;
+type SetWorkingContextParams = z.infer<typeof SetWorkingContextSchema>;
+type GetWorkingContextParams = z.infer<typeof GetWorkingContextSchema>;
+type TransitionTaskStateParams = z.infer<typeof TransitionTaskStateSchema>;
 
 // Context Management Tools
 server.tool<SetWorkingContextParams>(

@@ -34,8 +34,9 @@ export class GitHubClient {
 		TData,
 		TVariables extends Record<string, unknown> = Record<string, unknown>,
 	>(query: string, variables: TVariables): Promise<TData> {
+		this.ensureInitialized();
 		try {
-			return this.octokit.graphql<TData>(query, variables);
+			return await this.octokit!.graphql<TData>(query, variables);
 		} catch (error) {
 			console.error("GraphQL error:", error);
 			throw error;
@@ -50,8 +51,9 @@ export class GitHubClient {
 		variables: Record<string, unknown> = {},
 		pageInfo: { pageSize?: number } = {},
 	): Promise<T> {
+		this.ensureInitialized();
 		try {
-			return await this.octokit.graphql.paginate<T>(query, {
+			return await this.octokit!.graphql.paginate<T>(query, {
 				...variables,
 				pageSize: pageInfo.pageSize || 20,
 			});
@@ -69,8 +71,9 @@ export class GitHubClient {
 		path: string,
 		parameters: Record<string, unknown> = {},
 	): Promise<T> {
+		this.ensureInitialized();
 		try {
-			const response = await this.octokit.request(
+			const response = await this.octokit!.request(
 				`${method.toUpperCase()} ${path}`,
 				parameters,
 			);

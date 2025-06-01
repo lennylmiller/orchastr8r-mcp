@@ -90,16 +90,16 @@ export class ContextMiddleware {
     params: T,
     context: WorkingContext
   ): T & { projectId?: string; itemId?: string } {
-    const resolved = { ...params };
+    const resolved = { ...params } as T & { projectId?: string; itemId?: string };
 
     // Auto-resolve projectId if not provided
-    if (!(resolved as any).projectId && context.currentProjectId) {
-      (resolved as any).projectId = context.currentProjectId;
+    if (!resolved.projectId && context.currentProjectId) {
+      resolved.projectId = context.currentProjectId;
     }
 
     // Auto-resolve itemId if not provided
-    if (!(resolved as any).itemId && context.currentIssueId) {
-      (resolved as any).itemId = context.currentIssueId;
+    if (!resolved.itemId && context.currentIssueId) {
+      resolved.itemId = context.currentIssueId;
     }
 
     return resolved;

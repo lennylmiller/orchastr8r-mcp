@@ -8,12 +8,12 @@ import type {
 import { GitHubClient } from "./github-client.js";
 
 // Schema definitions for tool input validation
-export const GetIssueSchema = {
+export const GetIssueSchema = z.object({
 	name: z.string().describe("Repository name"),
 	number: z.number().describe("Issue number"),
-};
+});
 
-export const ListIssuesSchema = {
+export const ListIssuesSchema = z.object({
 	repo: z.string().describe("Repository name"),
 	state: z
 		.enum(["open", "closed", "all"])
@@ -42,18 +42,18 @@ export const ListIssuesSchema = {
 		.describe("Items per page (max 100)")
 		.default(30),
 	page: z.number().optional().describe("Page number").default(1),
-};
+});
 
-export const CreateIssueSchema = {
+export const CreateIssueSchema = z.object({
 	repo: z.string().describe("Repository name"),
 	title: z.string().describe("Issue title"),
 	body: z.string().optional().describe("Issue body/description"),
 	assignees: z.array(z.string()).optional().describe("Usernames to assign"),
 	milestone: z.number().optional().describe("Milestone ID"),
 	labels: z.array(z.string()).optional().describe("Labels to apply"),
-};
+});
 
-export const UpdateIssueSchema = {
+export const UpdateIssueSchema = z.object({
 	repo: z.string().describe("Repository name"),
 	issueNumber: z.number().describe("Issue number"),
 	title: z.string().optional().describe("New title"),
@@ -75,35 +75,41 @@ export const UpdateIssueSchema = {
 		.nullable()
 		.optional()
 		.describe("Milestone ID (null to clear)"),
-};
+});
 
-const UpdateIssueZodObject = z.object(UpdateIssueSchema);
-const CreateIssueZodObject = z.object(CreateIssueSchema);
-const ListIssuesZodObject = z.object(ListIssuesSchema);
-
-type UpdateIssueParams = z.infer<typeof UpdateIssueZodObject>;
-type CreateIssueParams = z.infer<typeof CreateIssueZodObject>;
-type ListIssuesParams = z.infer<typeof ListIssuesZodObject>;
+type UpdateIssueParams = z.infer<typeof UpdateIssueSchema>;
+type CreateIssueParams = z.infer<typeof CreateIssueSchema>;
+type ListIssuesParams = z.infer<typeof ListIssuesSchema>;
 
 export class IssueOperations {
-	private client: GitHubClient;
-	private owner: string;
+	private client: GitHubClient | null = null;
+	private owner: string | null = null;
 
 	constructor() {
-		this.client = new GitHubClient();
-		this.owner = process.env.GITHUB_OWNER as string;
+		// Lazy initialization - don't create client until first use
+	}
+
+	/**
+	 * Initialize the client and owner if not already initialized
+	 */
+	private ensureInitialized() {
+		if (!this.client) {
+			this.client = new GitHubClient();
+			this.owner = process.env.GITHUB_OWNER as string;
+		}
 	}
 
 	/**
 	 * Get a specific issue by repository and issue number
 	 */
 	async getIssue(input: Omit<GetIssueQueryVariables, "owner">) {
-		const result = await this.client.graphql<
+		this.ensureInitialized();
+		const result = await this.client!.graphql<
 			GetIssueQuery,
 			GetIssueQueryVariables
 		>(getIssue, {
 			...input,
-			owner: this.owner,
+			owner: this.owner!,
 		});
 
 		if (!result.repository?.issue) {
@@ -117,6 +123,7 @@ export class IssueOperations {
 	 * List issues for a repository
 	 */
 	async listIssues(params: ListIssuesParams) {
+		this.ensureInitialized();
 		const {
 			repo,
 			state,
@@ -130,7 +137,7 @@ export class IssueOperations {
 		} = params;
 
 		// Use REST API for this operation as it has better filtering options
-		const path = `/repos/${this.owner}/${repo}/issues`;
+		const path = `/repos/${this.owner!}/${repo}/issues`;
 		const queryParams: Record<string, string | undefined> = {
 			state,
 			sort,
@@ -156,7 +163,7 @@ export class IssueOperations {
 			.map(([key, value]) => `${key}=${encodeURIComponent(value ?? "")}`)
 			.join("&");
 
-		const result = await this.client.rest<
+		const result = await this.client!.rest<
 			Array<{
 				id: number;
 				node_id: string;
@@ -196,8 +203,9 @@ export class IssueOperations {
 	 * Create a new issue
 	 */
 	async createIssue(params: CreateIssueParams) {
+		this.ensureInitialized();
 		const { repo, title, body, assignees, milestone, labels } = params;
-		const path = `/repos/${this.owner}/${repo}/issues`;
+		const path = `/repos/${this.owner!}/${repo}/issues`;
 
 		const payload: Record<string, unknown> = {
 			title,
@@ -219,7 +227,7 @@ export class IssueOperations {
 			payload.labels = labels;
 		}
 
-		const result = await this.client.rest<{
+		const result = await this.client!.rest<{
 			id: number;
 			node_id: string;
 			number: number;
@@ -235,6 +243,7 @@ export class IssueOperations {
 	 * Update an existing issue
 	 */
 	async updateIssue(params: UpdateIssueParams) {
+		this.ensureInitialized();
 		const {
 			repo,
 			issueNumber,
@@ -245,7 +254,7 @@ export class IssueOperations {
 			labels,
 			milestone,
 		} = params;
-		const path = `/repos/${this.owner}/${repo}/issues/${issueNumber}`;
+		const path = `/repos/${this.owner!}/${repo}/issues/${issueNumber}`;
 
 		const payload: Record<string, unknown> = {};
 
@@ -273,7 +282,7 @@ export class IssueOperations {
 			payload.milestone = milestone;
 		}
 
-		const result = await this.client.rest<{
+		const result = await this.client!.rest<{
 			id: number;
 			node_id: string;
 			number: number;

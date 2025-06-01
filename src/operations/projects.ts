@@ -102,36 +102,35 @@ import {
 import { GitHubClient } from "./github-client.js";
 
 // Schema definitions for tool input validation
-export const GetProjectSchema = {
+export const GetProjectSchema = z.object({
 	id: z.string().describe("GitHub Project ID"),
-};
+});
 
-export const ListProjectsSchema = {
+export const ListProjectsSchema = z.object({
 	login: z
 		.string()
 		.describe("GitHub user or organization login")
 		.default(process.env.GITHUB_OWNER as string),
 	first: z.number().describe("Number of projects to return (max 100)"),
 	after: z.string().describe("Cursor for pagination"),
-};
+});
 
-export const GetProjectColumnsSchema = {
+export const GetProjectColumnsSchema = z.object({
 	id: z.string().describe("GitHub Project ID"),
-};
+});
 
-export const GetProjectFieldsSchema = {
+export const GetProjectFieldsSchema = z.object({
 	id: z.string().describe("GitHub Project ID"),
-};
+});
 
-export const GetProjectItemsSchema = {
+export const GetProjectItemsSchema = z.object({
 	id: z.string().describe("GitHub Project ID"),
 	first: z.number().describe("Number of items to return (max 100)"),
 	after: z.string().describe("Cursor for pagination"),
 	filter: z
 		.string()
-
 		.describe("Filter for items (e.g., status field value)"),
-};
+});
 
 export const FieldValueSchema = z
 	.object({
@@ -177,7 +176,7 @@ export const FieldValueSchema = z
 		return result;
 	});
 
-export const UpdateProjectItemFieldValueSchema = {
+export const UpdateProjectItemFieldValueSchema = z.object({
 	projectId: z.string().describe("The ID of the Project."),
 	itemId: z.string().describe("The ID of the item to be updated."),
 	fieldId: z.string().describe("The ID of the field to be updated."),
@@ -191,9 +190,9 @@ export const UpdateProjectItemFieldValueSchema = {
 			"A unique string identifier for the client performing the mutation.",
 		)
 		.default(Date.now().toString()),
-};
+});
 
-export const BulkUpdateProjectItemFieldValueSchema = {
+export const BulkUpdateProjectItemFieldValueSchema = z.object({
 	projectId: z.string().describe("The ID of the Project."),
 	itemIds: z.array(z.string()).describe("The IDs of the items to be updated."),
 	fieldId: z.string().describe("The ID of the field to be updated."),
@@ -206,10 +205,10 @@ export const BulkUpdateProjectItemFieldValueSchema = {
 			"A unique string identifier for the client performing the mutation.",
 		)
 		.default(Date.now().toString()),
-};
+});
 
 // New schema definitions for Project V2 operations
-export const CreateProjectV2Schema = {
+export const CreateProjectV2Schema = z.object({
 	ownerId: z.string().describe("The owner ID to create the project under."),
 	title: z.string().describe("The title of the project."),
 	clientMutationId: z.string().default(Date.now().toString()),
@@ -219,9 +218,9 @@ export const CreateProjectV2Schema = {
 		.describe(
 			"The team to link the project to. The team will be granted read permissions.",
 		),
-};
+});
 
-export const UpdateProjectV2Schema = {
+export const UpdateProjectV2Schema = z.object({
 	projectId: z.string().describe("The ID of the Project to update."),
 	title: z.string().describe("Set the title of the project."),
 	shortDescription: z
@@ -238,14 +237,14 @@ export const UpdateProjectV2Schema = {
 		.string()
 
 		.describe("Set the readme description of the project."),
-};
+});
 
-export const DeleteProjectV2Schema = {
+export const DeleteProjectV2Schema = z.object({
 	projectId: z.string().describe("The ID of the Project to delete."),
 	clientMutationId: z.string().default(Date.now().toString()),
-};
+});
 
-export const CopyProjectV2Schema = {
+export const CopyProjectV2Schema = z.object({
 	projectId: z.string().describe("The ID of the source Project to copy."),
 	ownerId: z.string().describe("The owner ID of the new project."),
 	title: z.string().describe("The title of the project."),
@@ -254,9 +253,9 @@ export const CopyProjectV2Schema = {
 
 		.describe("Include draft issues in the new project"),
 	clientMutationId: z.string().default(Date.now().toString()),
-};
+});
 
-export const AddProjectV2DraftIssueSchema = {
+export const AddProjectV2DraftIssueSchema = z.object({
 	projectId: z
 		.string()
 		.describe("The ID of the Project to add the draft issue to."),
@@ -271,9 +270,9 @@ export const AddProjectV2DraftIssueSchema = {
 
 		.describe("The IDs of the assignees of the draft issue."),
 	clientMutationId: z.string().default(Date.now().toString()),
-};
+});
 
-export const ConvertProjectV2DraftIssueToIssueSchema = {
+export const ConvertProjectV2DraftIssueToIssueSchema = z.object({
 	itemId: z
 		.string()
 		.describe("The ID of the draft issue ProjectV2Item to convert."),
@@ -281,15 +280,15 @@ export const ConvertProjectV2DraftIssueToIssueSchema = {
 		.string()
 		.describe("The ID of the repository to create the issue in."),
 	clientMutationId: z.string().default(Date.now().toString()),
-};
+});
 
-export const AddProjectV2ItemByIdSchema = {
+export const AddProjectV2ItemByIdSchema = z.object({
 	projectId: z.string().describe("The ID of the Project to add the item to."),
 	contentId: z.string().describe("The id of the Issue or Pull Request to add."),
 	clientMutationId: z.string().default(Date.now().toString()),
-};
+});
 
-export const UpdateProjectV2ItemPositionSchema = {
+export const UpdateProjectV2ItemPositionSchema = z.object({
 	projectId: z.string().describe("The ID of the Project."),
 	itemId: z.string().describe("The ID of the item to be moved."),
 	afterId: z
@@ -299,17 +298,17 @@ export const UpdateProjectV2ItemPositionSchema = {
 			"The ID of the item to position this item after. If omitted or set to null the item will be moved to top.",
 		),
 	clientMutationId: z.string().default(Date.now().toString()),
-};
+});
 
-export const DeleteProjectV2ItemSchema = {
+export const DeleteProjectV2ItemSchema = z.object({
 	projectId: z
 		.string()
 		.describe("The ID of the Project from which the item should be removed."),
 	itemId: z.string().describe("The ID of the item to be removed."),
 	clientMutationId: z.string().default(Date.now().toString()),
-};
+});
 
-export const CreateProjectV2FieldSchema = {
+export const CreateProjectV2FieldSchema = z.object({
 	projectId: z
 		.string()
 		.describe("The ID of the Project to create the field in."),
@@ -350,9 +349,9 @@ export const CreateProjectV2FieldSchema = {
 			)
 			.describe("Zero or more iterations for the field."),
 	}),
-};
+});
 
-export const UpdateProjectV2FieldSchema = {
+export const UpdateProjectV2FieldSchema = z.object({
 	fieldId: z.string().describe("The ID of the field to update."),
 	name: z.string().describe("The name to update."),
 	singleSelectOptions: z
@@ -387,14 +386,14 @@ export const UpdateProjectV2FieldSchema = {
 			startDate: z.string().describe("The start date for the first iteration."),
 		})
 		.describe("Configuration for an iteration field."),
-};
+});
 
-export const DeleteProjectV2FieldSchema = {
+export const DeleteProjectV2FieldSchema = z.object({
 	fieldId: z.string().describe("The ID of the field to delete."),
 	clientMutationId: z.string().default(Date.now().toString()),
-};
+});
 
-export const UpdateProjectV2StatusUpdateSchema = {
+export const UpdateProjectV2StatusUpdateSchema = z.object({
 	statusUpdateId: z
 		.string()
 		.describe("The ID of the status update to be updated."),
@@ -412,9 +411,9 @@ export const UpdateProjectV2StatusUpdateSchema = {
 		.nativeEnum(ProjectV2StatusUpdateStatus)
 
 		.describe("The status of the status update."),
-};
+});
 
-export const ArchiveProjectV2ItemSchema = {
+export const ArchiveProjectV2ItemSchema = z.object({
 	projectId: z
 		.string()
 		.describe("The ID of the Project to archive the item from."),
@@ -425,36 +424,36 @@ export const ArchiveProjectV2ItemSchema = {
 		.describe(
 			"A unique string identifier for the client performing the mutation.",
 		),
-};
+});
 
-export const UnarchiveProjectV2ItemSchema = {
+export const UnarchiveProjectV2ItemSchema = z.object({
 	projectId: z
 		.string()
 		.describe("The ID of the Project to archive the item from."),
 	itemId: z.string().describe("The ID of the ProjectV2Item to unarchive."),
 	clientMutationId: z.string().default(Date.now().toString()),
-};
+});
 
-export const ClearProjectV2ItemFieldValueSchema = {
+export const ClearProjectV2ItemFieldValueSchema = z.object({
 	projectId: z.string().describe("The ID of the Project."),
 	itemId: z.string().describe("The ID of the item to be cleared."),
 	fieldId: z.string().describe("The ID of the field to be cleared."),
 	clientMutationId: z.string().default(Date.now().toString()),
-};
+});
 
-export const MarkProjectV2AsTemplateSchema = {
+export const MarkProjectV2AsTemplateSchema = z.object({
 	projectId: z
 		.string()
 		.describe("The ID of the Project to mark as a template."),
 	clientMutationId: z.string().default(Date.now().toString()),
-};
+});
 
-export const UnmarkProjectV2AsTemplateSchema = {
+export const UnmarkProjectV2AsTemplateSchema = z.object({
 	projectId: z
 		.string()
 		.describe("The ID of the Project to unmark as a template."),
 	clientMutationId: z.string().default(Date.now().toString()),
-};
+});
 
 interface BulkUpdateProjectV2ItemFieldValueInput
 	extends Omit<UpdateProjectV2ItemFieldValueInput, "itemId"> {
@@ -463,27 +462,38 @@ interface BulkUpdateProjectV2ItemFieldValueInput
 
 // Project operations class
 export class ProjectOperations {
-	private client: GitHubClient;
-	private owner: string;
+	private client: GitHubClient | null = null;
+	private owner: string | null = null;
 
 	constructor() {
-		this.client = new GitHubClient();
-		this.owner = process.env.GITHUB_OWNER as string;
+		// Lazy initialization - don't create client until first use
+	}
+
+	/**
+	 * Initialize the client and owner if not already initialized
+	 */
+	private ensureInitialized() {
+		if (!this.client) {
+			this.client = new GitHubClient();
+			this.owner = process.env.GITHUB_OWNER as string;
+		}
 	}
 
 	async getProject(params: GetProjectQueryVariables) {
-		return this.client.graphql<GetProjectQuery, GetProjectQueryVariables>(
+		this.ensureInitialized();
+		return this.client!.graphql<GetProjectQuery, GetProjectQueryVariables>(
 			getProject,
 			params,
 		);
 	}
 
 	async listProjects(params: ListProjectsQueryVariables) {
-		const result = await this.client.graphql<
+		this.ensureInitialized();
+		const result = await this.client!.graphql<
 			ListProjectsQuery,
 			ListProjectsQueryVariables
 		>(listProjects, {
-			login: this.owner,
+			login: this.owner!,
 			first: params?.first || 20,
 			after: params?.after || null,
 		});

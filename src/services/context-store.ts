@@ -1,7 +1,6 @@
 import { z } from "zod";
-import fs from "fs/promises";
-import path from "path";
-import { projectOperations } from "../operations/index.js";
+import * as fs from "fs/promises";
+import * as path from "path";
 
 /**
  * Task state enumeration for development workflow tracking
@@ -111,10 +110,23 @@ class PersistenceManager {
 
         // Validate loaded context
         const validated = WorkingContextSchema.parse(context);
-        
+
+        // Convert to proper WorkingContext type
+        const workingContext: WorkingContext = {
+          currentProjectId: validated.currentProjectId,
+          currentIssueId: validated.currentIssueId,
+          currentTaskState: validated.currentTaskState,
+          sessionId: validated.sessionId,
+          lastUpdated: validated.lastUpdated,
+          lastCommitSha: validated.lastCommitSha,
+          activeBranch: validated.activeBranch,
+          currentSprintId: validated.currentSprintId,
+          currentIteration: validated.currentIteration,
+        };
+
         // Promote to memory cache
-        this.memoryCache.set('current', validated);
-        return validated;
+        this.memoryCache.set('current', workingContext);
+        return workingContext;
       } catch (fileError) {
         // File doesn't exist or is invalid, return default context
         return this.getDefaultContext();
@@ -162,36 +174,49 @@ class PersistenceManager {
  * Concurrency control for context updates
  */
 class ContextLock {
-  private locked = false;
   private queue: Array<() => Promise<void>> = [];
+  private processing = false;
 
   /**
    * Execute operation with exclusive lock
    */
   async withLock<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.locked) {
-      return new Promise((resolve, reject) => {
-        this.queue.push(async () => {
-          try {
-            resolve(await operation());
-          } catch (error) {
-            reject(error);
-          }
-        });
+    return new Promise((resolve, reject) => {
+      this.queue.push(async () => {
+        try {
+          const result = await operation();
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
       });
+
+      this.processQueue();
+    });
+  }
+
+  /**
+   * Process the queue sequentially
+   */
+  private async processQueue(): Promise<void> {
+    if (this.processing || this.queue.length === 0) {
+      return;
     }
 
-    this.locked = true;
-    try {
-      return await operation();
-    } finally {
-      this.locked = false;
-      const next = this.queue.shift();
-      if (next) {
-        // Process next operation asynchronously
-        next().catch(console.error);
+    this.processing = true;
+
+    while (this.queue.length > 0) {
+      const operation = this.queue.shift();
+      if (operation) {
+        try {
+          await operation();
+        } catch (error) {
+          console.error('Context lock operation failed:', error);
+        }
       }
     }
+
+    this.processing = false;
   }
 }
 
@@ -254,13 +279,9 @@ export class ContextStore {
    * Set current project with validation
    */
   async setCurrentProject(projectId: string): Promise<void> {
-    // Validate project exists using existing operations
-    try {
-      await projectOperations.getProject({ id: projectId });
-      await this.updateContext({ currentProjectId: projectId });
-    } catch (error) {
-      throw new Error(`Invalid project ID: ${projectId}. ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    // TODO: Add project validation when circular dependency is resolved
+    // For now, just set the project ID without validation
+    await this.updateContext({ currentProjectId: projectId });
   }
 
   /**
@@ -299,14 +320,17 @@ export class ContextStore {
   async validateContextIntegrity(): Promise<boolean> {
     try {
       const context = await this.getCurrentContext();
-      
-      // Validate project if set
-      if (context.currentProjectId) {
-        await projectOperations.getProject({ id: context.currentProjectId });
+
+      // TODO: Add project validation when circular dependency is resolved
+      // For now, just validate the context structure
+      if (context.currentProjectId && typeof context.currentProjectId !== 'string') {
+        return false;
       }
 
-      // TODO: Validate issue if set (when issue operations are available)
-      
+      if (context.currentIssueId && typeof context.currentIssueId !== 'string') {
+        return false;
+      }
+
       return true;
     } catch (error) {
       console.error('Context validation failed:', error);

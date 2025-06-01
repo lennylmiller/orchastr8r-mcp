@@ -8,11 +8,11 @@ import type {
 import { GitHubClient } from "./github-client.js";
 
 // Schema definitions for tool input validation
-export const GetRepositorySchema = {
+export const GetRepositorySchema = z.object({
 	name: z.string().describe("Repository name"),
-};
+});
 
-export const ListRepositoriesSchema = {
+export const ListRepositoriesSchema = z.object({
 	type: z
 		.enum(["all", "owner", "public", "private", "member"])
 		.optional()
@@ -34,30 +34,38 @@ export const ListRepositoriesSchema = {
 		.describe("Items per page (max 100)")
 		.default(30),
 	page: z.number().optional().describe("Page number").default(1),
-};
+});
 
-const ListRepositoriesZodObject = z.object(ListRepositoriesSchema);
-
-type ListRepositoriesParams = z.infer<typeof ListRepositoriesZodObject>;
+type ListRepositoriesParams = z.infer<typeof ListRepositoriesSchema>;
 export class RepositoryOperations {
-	private client: GitHubClient;
-	private owner: string;
+	private client: GitHubClient | null = null;
+	private owner: string | null = null;
 
 	constructor() {
-		this.client = new GitHubClient();
-		this.owner = process.env.GITHUB_OWNER as string;
+		// Lazy initialization - don't create client until first use
+	}
+
+	/**
+	 * Initialize the client and owner if not already initialized
+	 */
+	private ensureInitialized() {
+		if (!this.client) {
+			this.client = new GitHubClient();
+			this.owner = process.env.GITHUB_OWNER as string;
+		}
 	}
 
 	/**
 	 * Get a repository by owner and name
 	 */
 	async getRepository(input: Omit<GetRepositoryQueryVariables, "owner">) {
-		const result = await this.client.graphql<
+		this.ensureInitialized();
+		const result = await this.client!.graphql<
 			GetRepositoryQuery,
 			GetRepositoryQueryVariables
 		>(getRepository, {
 			...input,
-			owner: this.owner,
+			owner: this.owner!,
 		});
 
 		return result.repository;
@@ -67,10 +75,11 @@ export class RepositoryOperations {
 	 * List repositories for a user
 	 */
 	async listRepositories(params: ListRepositoriesParams) {
+		this.ensureInitialized();
 		const { type, sort, direction, per_page, page } = params;
 
 		// Use REST API for this operation as it provides better pagination and filtering
-		const path = `/users/${this.owner}/repos`;
+		const path = `/users/${this.owner!}/repos`;
 
 		const queryParams: Record<string, string | undefined> = {
 			type,
@@ -85,7 +94,7 @@ export class RepositoryOperations {
 			.map(([key, value]) => `${key}=${encodeURIComponent(value ?? "")}`)
 			.join("&");
 
-		const result = await this.client.rest<
+		const result = await this.client!.rest<
 			Array<{
 				id: number;
 				node_id: string;

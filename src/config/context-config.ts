@@ -144,15 +144,22 @@ function loadConfigFromEnv(): Partial<ContextConfig> {
  * Resolve file paths relative to appropriate base directory
  */
 function resolveFilePaths(config: ContextConfig): ContextConfig {
-  const baseDir = config.isDevelopment 
-    ? process.cwd() 
-    : path.join(os.homedir(), '.orchestr8r');
-  
+  // Always use a safe, accessible directory
+  // For MCP servers, use the project directory or user home directory
+  const baseDir = config.isDevelopment
+    ? process.cwd()
+    : process.cwd(); // Use project directory instead of root filesystem
+
+  // Extract just the filename from the configured paths to avoid nested .orchestr8r directories
+  const persistenceFile = path.basename(config.persistencePath);
+  const lockFile = path.basename(config.lockPath);
+  const backupFile = path.basename(config.backupPath);
+
   return {
     ...config,
-    persistencePath: path.resolve(baseDir, config.persistencePath),
-    lockPath: path.resolve(baseDir, config.lockPath),
-    backupPath: path.resolve(baseDir, config.backupPath),
+    persistencePath: path.join(baseDir, '.orchestr8r', persistenceFile),
+    lockPath: path.join(baseDir, '.orchestr8r', lockFile),
+    backupPath: path.join(baseDir, '.orchestr8r', backupFile),
   };
 }
 
@@ -330,7 +337,7 @@ export function validateDeploymentConfig(): {
       warnings.push(`Context directory does not exist: ${contextDir}`);
     }
   } catch (error) {
-    errors.push(`File system check failed: ${error.message}`);
+    errors.push(`File system check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
   // Check GitHub configuration
