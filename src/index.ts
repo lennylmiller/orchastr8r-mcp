@@ -5,6 +5,7 @@ import { z } from "zod";
 import { issueOperations, projectOperations } from "./operations/index.js";
 import { contextStore, type TaskState } from "./services/context-store.js";
 import { ContextMiddleware } from "./middleware/context-middleware.js";
+import { contextConfig, ContextConfigUtils } from "./config/context-config.js";
 import {
 	CreateIssueSchema,
 	GetIssueSchema,
