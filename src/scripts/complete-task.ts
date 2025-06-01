@@ -57,15 +57,15 @@ interface GroupedItem {
  */
 function getFieldValue(item: ProjectV2Item, fieldName: string): string | undefined {
   const fieldValue = item.fieldValues?.nodes?.find(
-    (node: ProjectV2ItemFieldValue) => node.field?.name === fieldName
+    (node): node is ProjectV2ItemFieldValue => node !== null && node.field?.name === fieldName
   );
-  
+
   if (fieldValue?.__typename === 'ProjectV2ItemFieldTextValue') {
-    return fieldValue.text;
+    return (fieldValue as any).text;
   } else if (fieldValue?.__typename === 'ProjectV2ItemFieldSingleSelectValue') {
-    return fieldValue.name || fieldValue.optionId;
+    return (fieldValue as any).name || (fieldValue as any).optionId;
   }
-  
+
   return undefined;
 }
 
@@ -125,7 +125,7 @@ function saveCompletedTask(task: CompletedTask): void {
  */
 async function markTaskDone(itemId: string): Promise<boolean> {
   try {
-    const client = projectOperations.githubClient;
+    const client = (projectOperations as any).githubClient;
     await client.updateProjectItemField({
       projectId: PROJECT_ID,
       itemId: itemId,
@@ -189,11 +189,10 @@ async function main(): Promise<void> {
     const result = await projectOperations.getProjectItems({
       id: PROJECT_ID,
       first: 50,
-      after: '',
-      filter: ''
+      after: ''
     });
-    
-    const items = result.items || [];
+
+    const items = (result.items || []).filter((item): item is ProjectV2Item => item !== null);
     const inProgress = getItemsByStatus(items, 'In Progress');
     const todo = sortByPriority(getItemsByStatus(items, 'Todo'));
     
@@ -203,7 +202,7 @@ async function main(): Promise<void> {
     if (itemId) {
       // Specific item provided
       targetItem = items
-        .filter(item => item.id === itemId)
+        .filter((item): item is ProjectV2Item => item !== null && item.id === itemId)
         .map(item => ({
           id: item.id,
           title: getFieldValue(item, 'Title') || 'Untitled',

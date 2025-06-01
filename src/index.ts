@@ -1,3 +1,4 @@
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -759,26 +760,26 @@ server.tool<UpdateIssueParams>(
 );
 
 // Context Management Tool Schemas
-const SetWorkingContextSchema = z.object({
+const SetWorkingContextSchema = {
 	projectId: z.string().optional().describe("GitHub Project ID to set as current"),
 	issueId: z.string().optional().describe("GitHub Issue ID to set as current"),
 	taskState: z.enum(['research', 'implementation', 'testing', 'review', 'done', 'blocked']).optional().describe("Current task state"),
 	clearExisting: z.boolean().default(false).describe("Clear existing context before setting new values"),
-});
+};
 
-const GetWorkingContextSchema = z.object({
+const GetWorkingContextSchema = {
 	includeValidation: z.boolean().default(true).describe("Include context validation in response"),
-});
+};
 
-const TransitionTaskStateSchema = z.object({
+const TransitionTaskStateSchema = {
 	newState: z.enum(['research', 'implementation', 'testing', 'review', 'done', 'blocked']).describe("New task state to transition to"),
 	reason: z.string().optional().describe("Reason for state transition"),
 	updateProjectStatus: z.boolean().default(true).describe("Automatically update project item status"),
-});
+};
 
-type SetWorkingContextParams = z.infer<typeof SetWorkingContextSchema>;
-type GetWorkingContextParams = z.infer<typeof GetWorkingContextSchema>;
-type TransitionTaskStateParams = z.infer<typeof TransitionTaskStateSchema>;
+type SetWorkingContextParams = typeof SetWorkingContextSchema;
+type GetWorkingContextParams = typeof GetWorkingContextSchema;
+type TransitionTaskStateParams = typeof TransitionTaskStateSchema;
 
 // Context Management Tools
 server.tool<SetWorkingContextParams>(

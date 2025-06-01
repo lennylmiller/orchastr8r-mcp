@@ -1,222 +1,369 @@
-# Contributing to orchestr8r-mcp
+# Contributing to Orchestr8r-MCP
 
-Thank you for your interest in contributing to orchestr8r-mcp! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to Orchestr8r-MCP! This guide will help you get started with adding features, writing automation scripts, and improving the codebase.
 
-## Code of Conduct
-
-By participating in this project, you agree to abide by our Code of Conduct: be respectful, inclusive, and professional.
-
-## How to Contribute
-
-### Reporting Issues
-
-1. **Check existing issues** first to avoid duplicates
-2. **Use issue templates** when available
-3. **Provide reproduction steps** for bugs
-4. **Include environment details** (OS, Node version, etc.)
-
-### Suggesting Features
-
-1. **Open a discussion** first for major features
-2. **Explain the use case** not just the solution
-3. **Consider the scope** - does it fit orchestr8r-mcp's vision?
-
-### Submitting Pull Requests
-
-1. **Fork the repository** and create a feature branch
-2. **Follow the setup instructions** below
-3. **Write tests** for new functionality
-4. **Update documentation** as needed
-5. **Submit a PR** with a clear description
-
-## Development Setup
+## Getting Started
 
 ### Prerequisites
+- Node.js 23+ or Bun runtime
+- GitHub account with Personal Access Token
+- Basic knowledge of TypeScript and GraphQL
+- Familiarity with GitHub Projects v2
 
-- Node.js >= 18.0.0 (recommend using asdf or nvm)
-- Bun >= 1.0.0
-- GitHub Personal Access Token with appropriate permissions
-- VS Code (recommended) or your preferred editor
+### Development Setup
+```bash
+# Clone the repository
+git clone https://github.com/your-username/orchestr8r-mcp.git
+cd orchestr8r-mcp
 
-### Local Development
+# Install dependencies
+bun install
 
-1. Clone your fork:
-   ```bash
-   git clone git@github.com:YOUR_USERNAME/orchestr8r-mcp.git
-   cd orchestr8r-mcp
-   ```
+# Set up environment
+cp .env.example .env
+# Add your GITHUB_TOKEN and GITHUB_OWNER
 
-2. Install dependencies:
-   ```bash
-   bun install
-   ```
-
-3. Set up environment:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your GitHub token
-   ```
-
-4. Build the project:
-   ```bash
-   bun run build
-   ```
-
-5. Run tests:
-   ```bash
-   bun test
-   ```
-
-### Testing with Claude Desktop
-
-1. Build the project:
-   ```bash
-   bun run build
-   ```
-
-2. Configure Claude Desktop:
-   ```json
-   {
-     "mcpServers": {
-       "orchestr8r-dev": {
-         "command": "node",
-         "args": ["/path/to/your/orchestr8r-mcp/build/index.js"],
-         "env": {
-           "GITHUB_TOKEN": "your_token",
-           "GITHUB_OWNER": "your_username"
-         }
-       }
-     }
-   }
-   ```
-
-3. Restart Claude Desktop to load changes
-
-## Code Standards
-
-### TypeScript
-
-- Use TypeScript strict mode
-- Provide explicit types (avoid `any`)
-- Use interfaces for object shapes
-- Document complex types
-
-### Code Style
-
-- Use 2-space indentation
-- Use semicolons
-- Use single quotes for strings
-- Keep lines under 100 characters
-- Use meaningful variable names
-
-### Commits
-
-Follow conventional commits:
-- `feat:` New features
-- `fix:` Bug fixes
-- `docs:` Documentation changes
-- `test:` Test additions/changes
-- `refactor:` Code refactoring
-- `chore:` Maintenance tasks
-
-Example:
-```
-feat(projects): add bulk update operation for field values
-
-- Implement bulkUpdateProjectItemField mutation
-- Add tests for bulk operations
-- Update documentation
+# Build and test
+bun run build
+bun test
 ```
 
-### Testing
+## Code Patterns & Examples
 
-- Write tests for all new features
-- Maintain test coverage above 80%
-- Use descriptive test names
-- Test error cases, not just happy paths
+### Adding a New MCP Tool
 
-Example:
+Follow this pattern when adding new tools:
+
 ```typescript
-describe('ProjectOperations', () => {
-  test('should create project with required fields', async () => {
-    // Test implementation
-  });
+// In src/operations/projects.ts
+export async function bulkUpdateProjectItems(params: {
+  projectId: string;
+  itemIds: string[];
+  fieldId: string;
+  value: any;
+}): Promise<BulkUpdateResult> {
+  const mutations = params.itemIds.map((itemId, index) => `
+    mutation_${index}: updateProjectV2ItemFieldValue(input: {
+      projectId: "${params.projectId}"
+      itemId: "${itemId}"
+      fieldId: "${params.fieldId}"
+      value: ${JSON.stringify(params.value)}
+    }) {
+      projectV2Item {
+        id
+      }
+    }
+  `);
   
-  test('should handle invalid project ID gracefully', async () => {
-    // Test error handling
+  const query = `mutation BulkUpdate { ${mutations.join('\n')} }`;
+  return await githubClient.graphql(query);
+}
+
+// In src/index.ts - Register the tool
+server.tool(
+  "bulk-update-items",
+  "Update multiple project items at once",
+  BulkUpdateItemsSchema,
+  async (params) => {
+    const result = await projectOperations.bulkUpdateProjectItems(params);
+    return {
+      content: [{
+        type: "text",
+        text: `Updated ${result.updatedCount} items successfully`
+      }]
+    };
+  }
+);
+```
+
+### Writing Automation Scripts
+
+All scripts follow the successful `morning-standup.ts` pattern:
+
+```typescript
+#!/usr/bin/env node
+
+import { projectOperations } from "../operations/index.js";
+import { readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { homedir } from 'os';
+
+// Configuration
+const PROJECT_ID = 'PVT_kwHOAALNNc4A5x3U';
+const STATUS_FIELD_ID = 'PVTSSF_lAHOAALNNc4A5x3UzguhPIo';
+
+// State management
+const STATE_FILE = join(homedir(), '.orchestr8r-state.json');
+
+interface ScriptState {
+  lastRun: string;
+  metrics: {
+    timeSaved: number;
+    tasksCompleted: number;
+  };
+}
+
+async function main(): Promise<void> {
+  const startTime = Date.now();
+  
+  console.log('🚀 Starting automation...\n');
+  
+  try {
+    // 1. Fetch data
+    const items = await getProjectItems();
+    
+    // 2. Process and analyze
+    const analysis = analyzeItems(items);
+    
+    // 3. Take actions
+    await performAutomation(analysis);
+    
+    // 4. Report results
+    const timeSaved = calculateTimeSaved(startTime);
+    console.log(`\n⏰ Time saved: ~${timeSaved} minutes`);
+    
+    // 5. Save state
+    updateState({ timeSaved });
+    
+  } catch (error) {
+    console.error('❌ Error:', error);
+    process.exit(1);
+  }
+}
+
+// Console output with emojis
+function displayResults(data: any): void {
+  console.log('📊 Results:');
+  console.log(`   ✅ Completed: ${data.completed}`);
+  console.log(`   🏃 In Progress: ${data.inProgress}`);
+  console.log(`   📋 Todo: ${data.todo}`);
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}
+```
+
+## Training Modules
+
+New contributors should complete these modules:
+
+### Module 1: Getting Started (30 min)
+- Set up development environment
+- Run existing scripts
+- Understand MCP protocol basics
+- Make first contribution
+
+### Module 2: Sprint Management (45 min)
+- GitHub Projects v2 concepts
+- GraphQL queries
+- Field management
+- Automation opportunities
+
+### Module 3: Workflow Automation (45 min)
+- Script patterns
+- State management
+- Error handling
+- Time tracking
+
+### Module 4: Advanced Features (60 min)
+- Plugin architecture
+- Caching strategies
+- Performance optimization
+- Testing approaches
+
+### Module 5: Real-World Scenarios (90 min)
+- Build complete feature
+- Handle edge cases
+- Deploy to production
+- Monitor usage
+
+## Architecture Guidelines
+
+### Current State Improvements
+
+When improving the existing code:
+
+```typescript
+// ❌ Current: Monolithic handler
+server.tool("update-item", schema, async (params) => {
+  // 50 lines of logic here
+});
+
+// ✅ Better: Extracted business logic
+server.tool("update-item", schema, async (params) => {
+  const result = await projectOps.updateItem(params);
+  return formatResponse(result);
+});
+```
+
+### Plugin Architecture (Future)
+
+Prepare for the upcoming plugin refactor:
+
+```typescript
+export class SprintPlugin implements MCPPlugin {
+  name = "sprint-management";
+  
+  tools = [
+    this.createSprintTool(),
+    this.planSprintTool(),
+    this.reviewSprintTool()
+  ];
+  
+  resources = [
+    {
+      uri: "sprint://{sprintId}/burndown",
+      handler: this.getBurndownChart.bind(this)
+    }
+  ];
+}
+```
+
+## Testing Guidelines
+
+### Unit Tests
+```typescript
+import { expect, test, describe } from "bun:test";
+import { calculateVelocity } from "../src/utils/metrics";
+
+describe("metrics", () => {
+  test("calculates velocity correctly", () => {
+    const items = [
+      { size: "S", status: "Done" },  // 2 points
+      { size: "M", status: "Done" },  // 3 points
+      { size: "L", status: "Done" }   // 5 points
+    ];
+    
+    expect(calculateVelocity(items)).toBe(10);
   });
 });
 ```
 
-## Project Structure
-
+### Integration Tests
+```typescript
+test("morning standup integration", async () => {
+  // Mock GitHub API
+  mockGitHubAPI();
+  
+  // Run script
+  const output = await runScript("morning-standup.ts");
+  
+  // Verify output
+  expect(output).toContain("Daily Standup");
+  expect(output).toContain("Time saved:");
+});
 ```
-orchestr8r-mcp/
-├── src/
-│   ├── index.ts          # MCP server entry point
-│   ├── operations/       # Business logic
-│   ├── graphql/         # GraphQL queries/mutations
-│   ├── types/           # TypeScript types
-│   └── common/          # Shared utilities
-├── tests/               # Test files
-├── docs/               # Documentation
-└── PLANNING/           # Architecture and planning docs
+
+## Common Tasks
+
+### Add a Project Field
+```typescript
+// 1. Add GraphQL query
+// src/graphql/projects/createProjectField.graphql
+mutation CreateProjectV2Field($input: CreateProjectV2FieldInput!) {
+  createProjectV2Field(input: $input) {
+    field {
+      id
+      name
+      dataType
+    }
+  }
+}
+
+// 2. Add operation
+// src/operations/projects.ts
+export async function createProjectField(params: CreateFieldParams) {
+  return githubClient.graphql(CREATE_FIELD_MUTATION, params);
+}
+
+// 3. Register tool
+// src/index.ts
+server.tool("create-field", CreateFieldSchema, async (params) => {
+  return await projectOperations.createProjectField(params);
+});
 ```
 
-## Making Changes
-
-### Adding a New Tool
-
-1. Create GraphQL query/mutation in `src/graphql/`
-2. Add operation in `src/operations/`
-3. Define Zod schema for validation
-4. Register tool in `src/index.ts`
-5. Add tests
-6. Document in `docs/reference/tools/`
-
-### Modifying Existing Tools
-
-1. Update GraphQL if needed
-2. Modify operation logic
-3. Update schema if parameters change
-4. Update tests
-5. Update documentation
+### Add Status Transition
+```typescript
+// Implement smart status transitions
+async function transitionStatus(
+  item: ProjectItem,
+  newStatus: string
+): Promise<void> {
+  const transitions = {
+    "Todo": ["In Progress"],
+    "In Progress": ["Review", "Blocked", "Done"],
+    "Review": ["In Progress", "Done"],
+    "Done": [] // Terminal state
+  };
+  
+  const currentStatus = getFieldValue(item, "Status");
+  const allowedTransitions = transitions[currentStatus] || [];
+  
+  if (!allowedTransitions.includes(newStatus)) {
+    throw new Error(`Invalid transition: ${currentStatus} → ${newStatus}`);
+  }
+  
+  await updateItemStatus(item.id, newStatus);
+}
+```
 
 ## Pull Request Process
 
-1. **Update your fork** with latest main branch
-2. **Run all tests** locally
-3. **Update documentation** if needed
-4. **Submit PR** with clear description
-5. **Address review feedback** promptly
+1. **Fork and Branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make Changes**
+   - Follow existing patterns
+   - Add tests for new features
+   - Update documentation
+
+3. **Test Thoroughly**
+   ```bash
+   bun test
+   bun run build
+   bun run your-new-script.ts --dry-run
+   ```
+
+4. **Submit PR**
+   - Clear description of changes
+   - Link to related issues
+   - Include time savings metrics
+   - Add screenshots if applicable
 
 ### PR Checklist
-
-- [ ] Tests pass locally
+- [ ] Tests pass (`bun test`)
+- [ ] Build succeeds (`bun run build`)
 - [ ] Documentation updated
-- [ ] Commit messages follow convention
-- [ ] No sensitive data committed
-- [ ] Breaking changes noted (if any)
+- [ ] Time savings documented
+- [ ] No sensitive data exposed
+- [ ] Follows existing patterns
 
-## Release Process
+## Code Style
 
-1. Maintainers merge PRs to main
-2. Version bumped according to semver
-3. Changelog updated
-4. GitHub release created
-5. npm package published (if applicable)
+- Use TypeScript strict mode
+- Prefer async/await over promises
+- Use meaningful variable names
+- Add JSDoc comments for public functions
+- Keep functions under 50 lines
+- Extract complex logic to utilities
 
 ## Getting Help
 
-- **Discord**: [Join our community](#)
-- **Discussions**: Use GitHub Discussions
-- **Issues**: For bugs and features
+- 💬 GitHub Discussions for questions
+- 🐛 GitHub Issues for bugs
+- 📚 Check existing scripts for patterns
+- 🤝 Tag @maintainers for review
 
 ## Recognition
 
-Contributors are recognized in:
-- GitHub contributors page
-- Release notes
-- Special thanks in documentation
+Contributors who provide significant value will be:
+- Added to CONTRIBUTORS.md
+- Mentioned in release notes
+- Invited to shape roadmap
+- Given early access to features
 
-Thank you for contributing to orchestr8r-mcp! 🎉
+Thank you for helping make developer workflows more intelligent! 🚀

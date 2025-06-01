@@ -59,17 +59,17 @@ interface GroupedItems {
  */
 function getFieldValue(item: ProjectV2Item, fieldName: string): string | undefined {
   const fieldValue = item.fieldValues?.nodes?.find(
-    (node: ProjectV2ItemFieldValue) => node.field?.name === fieldName
+    (node): node is ProjectV2ItemFieldValue => node !== null && node.field?.name === fieldName
   );
-  
+
   if (fieldValue?.__typename === 'ProjectV2ItemFieldTextValue') {
-    return fieldValue.text;
+    return (fieldValue as any).text;
   } else if (fieldValue?.__typename === 'ProjectV2ItemFieldSingleSelectValue') {
-    return fieldValue.name || fieldValue.optionId;
+    return (fieldValue as any).name || (fieldValue as any).optionId;
   } else if (fieldValue?.__typename === 'ProjectV2ItemFieldNumberValue') {
-    return fieldValue.number?.toString();
+    return (fieldValue as any).number?.toString();
   }
-  
+
   return undefined;
 }
 
@@ -81,11 +81,10 @@ async function getProjectItems(): Promise<ProjectV2Item[]> {
     const result = await projectOperations.getProjectItems({
       id: PROJECT_ID,
       first: 50,
-      after: '',
-      filter: ''
+      after: ''
     });
-    
-    return result.items || [];
+
+    return (result.items || []).filter((item): item is ProjectV2Item => item !== null);
   } catch (error) {
     console.error('Error fetching project items:', error);
     return [];
@@ -119,8 +118,8 @@ function groupItemsByStatus(items: ProjectV2Item[]): GroupedItems {
     };
     
     // Check if item has blocked label
-    if (item.content?.__typename === 'Issue' && 
-        item.content.labels?.nodes?.some(label => label.name.toLowerCase() === 'blocked')) {
+    if ((item.content as any)?.__typename === 'Issue' &&
+        (item.content as any).labels?.nodes?.some((label: any) => label.name.toLowerCase() === 'blocked')) {
       grouped['Blocked'].push(groupedItem);
     } else if (status in grouped) {
       grouped[status as keyof GroupedItems].push(groupedItem);

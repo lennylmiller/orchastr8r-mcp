@@ -19,7 +19,7 @@ const graphqlPlugin = {
 await build({
 	entryPoints: ["./src/index.ts"],
 	bundle: true,
-	minify: true,
+	minify: false,
 	platform: "node",
 	target: "node18",
 	outfile: "./build/index.js",

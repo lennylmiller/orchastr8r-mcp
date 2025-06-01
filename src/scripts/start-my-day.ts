@@ -62,15 +62,15 @@ interface GroupedItem {
  */
 function getFieldValue(item: ProjectV2Item, fieldName: string): string | undefined {
   const fieldValue = item.fieldValues?.nodes?.find(
-    (node: ProjectV2ItemFieldValue) => node.field?.name === fieldName
+    (node): node is ProjectV2ItemFieldValue => node !== null && node.field?.name === fieldName
   );
-  
+
   if (fieldValue?.__typename === 'ProjectV2ItemFieldTextValue') {
-    return fieldValue.text;
+    return (fieldValue as any).text;
   } else if (fieldValue?.__typename === 'ProjectV2ItemFieldSingleSelectValue') {
-    return fieldValue.name || fieldValue.optionId;
+    return (fieldValue as any).name || (fieldValue as any).optionId;
   }
-  
+
   return undefined;
 }
 
@@ -82,11 +82,10 @@ async function getProjectItems(): Promise<ProjectV2Item[]> {
     const result = await projectOperations.getProjectItems({
       id: PROJECT_ID,
       first: 50,
-      after: '',
-      filter: ''
+      after: ''
     });
-    
-    return result.items || [];
+
+    return (result.items || []).filter((item): item is ProjectV2Item => item !== null);
   } catch (error) {
     console.error('Error fetching project items:', error);
     return [];
@@ -105,7 +104,7 @@ function getItemsByStatus(items: ProjectV2Item[], status: string): GroupedItem[]
       type: item.type || 'ISSUE',
       priority: getFieldValue(item, 'Priority'),
       size: getFieldValue(item, 'Size'),
-      url: item.content?.__typename === 'Issue' ? item.content.url : undefined
+      url: (item.content as any)?.__typename === 'Issue' ? (item.content as any).url : undefined
     }));
 }
 
@@ -179,7 +178,7 @@ async function getCurrentBranch(): Promise<string | null> {
  */
 async function moveToInProgress(item: GroupedItem): Promise<boolean> {
   try {
-    const client = projectOperations.githubClient;
+    const client = (projectOperations as any).githubClient;
     await client.updateProjectItemField({
       projectId: PROJECT_ID,
       itemId: item.id,

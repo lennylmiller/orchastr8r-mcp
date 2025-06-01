@@ -93,13 +93,13 @@ export class ContextMiddleware {
     const resolved = { ...params };
 
     // Auto-resolve projectId if not provided
-    if (!resolved.projectId && context.currentProjectId) {
-      resolved.projectId = context.currentProjectId;
+    if (!(resolved as any).projectId && context.currentProjectId) {
+      (resolved as any).projectId = context.currentProjectId;
     }
 
     // Auto-resolve itemId if not provided
-    if (!resolved.itemId && context.currentIssueId) {
-      resolved.itemId = context.currentIssueId;
+    if (!(resolved as any).itemId && context.currentIssueId) {
+      (resolved as any).itemId = context.currentIssueId;
     }
 
     return resolved;

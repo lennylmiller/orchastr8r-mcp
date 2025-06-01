@@ -96,15 +96,15 @@ async function getLastGitCommand(): Promise<string | null> {
  */
 function getFieldValue(item: ProjectV2Item, fieldName: string): string | undefined {
   const fieldValue = item.fieldValues?.nodes?.find(
-    (node: ProjectV2ItemFieldValue) => node.field?.name === fieldName
+    (node): node is ProjectV2ItemFieldValue => node !== null && node.field?.name === fieldName
   );
-  
+
   if (fieldValue?.__typename === 'ProjectV2ItemFieldTextValue') {
-    return fieldValue.text;
+    return (fieldValue as any).text;
   } else if (fieldValue?.__typename === 'ProjectV2ItemFieldSingleSelectValue') {
-    return fieldValue.name || fieldValue.optionId;
+    return (fieldValue as any).name || (fieldValue as any).optionId;
   }
-  
+
   return undefined;
 }
 
@@ -164,12 +164,11 @@ async function findTask(query: string): Promise<ProjectV2Item | null> {
   const result = await projectOperations.getProjectItems({
     id: PROJECT_ID,
     first: 50,
-    after: '',
-    filter: ''
+    after: ''
   });
-  
-  const items = result.items || [];
-  
+
+  const items = (result.items || []).filter((item): item is ProjectV2Item => item !== null);
+
   // Try exact ID match first
   let found = items.find(item => item.id === query);
   
@@ -181,7 +180,7 @@ async function findTask(query: string): Promise<ProjectV2Item | null> {
       return title.toLowerCase().includes(lowerQuery);
     });
   }
-  
+
   return found || null;
 }
 

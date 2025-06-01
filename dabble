@@ -1,0 +1,162 @@
+# SCRUM Conversation Management alignment
+root = /Users/LenMiller/code/banno
+
+These are the project I want you to search and they are located under the root;
+   /claude-training
+   /doc-gen-prompts
+   /fi-recreation-mgr
+   /fi-toolbox
+   /orchestr8r-mcp 
+
+please use the following prompts to find all the SCRUM related content in the project folders abov e
+
+Search comprehensively through the entire codebase to find all files, code, documentation, comments, and references related to SCRUM methodology. This should include:
+
+1. Files with "scrum" in their names or paths
+2. Code containing SCRUM-related terms (sprint, backlog, user story, standup, retrospective, etc.)
+3. Documentation mentioning SCRUM practices
+4. Configuration files or settings related to SCRUM tools
+5. Comments or strings referencing SCRUM concepts
+
+Use the codebase-retrieval tool to perform this comprehensive search. Provide a complete inventory of all SCRUM-related content found in the repository.
+
+# SCRUM Content Discovery Across Multiple Projects
+
+## Objective
+Perform a comprehensive search across multiple project directories to identify and catalog all SCRUM methodology-related content.
+
+## Project Scope
+Search the following specific project directories located under `/Users/LenMiller/code/banno/`:
+- `claude-training/`
+- `doc-gen-prompts/`
+- `fi-recreation-mgr/`
+- `fi-toolbox/`
+- `orchestr8r-mcp/`
+
+## Search Criteria
+Use the codebase-retrieval tool to find ALL instances of SCRUM-related content including:
+
+### 1. File and Directory Names
+- Files or folders containing "scrum", "agile", "sprint", "backlog" in their names (case-insensitive)
+
+### 2. SCRUM Terminology in Code and Documentation
+- **Sprint-related**: sprint, sprint planning, sprint review, sprint retrospective, sprint goal
+- **Backlog-related**: product backlog, sprint backlog, backlog refinement, backlog grooming
+- **Roles**: scrum master, product owner, development team, stakeholder
+- **Events**: daily standup, daily scrum, sprint planning, sprint review, retrospective
+- **Artifacts**: user story, acceptance criteria, definition of done, burndown chart, velocity
+- **Estimation**: story points, planning poker, t-shirt sizing
+- **Agile concepts**: epic, feature, task, impediment, blocker
+
+### 3. Configuration and Tool References
+- JIRA, Azure DevOps, or other SCRUM tool configurations
+- Workflow definitions related to SCRUM processes
+- Template files for user stories, sprint planning, or retrospectives
+
+### 4. Documentation and Comments
+- README files mentioning SCRUM practices
+- Code comments referencing SCRUM concepts
+- Process documentation or guidelines
+- Meeting notes or templates
+
+## Deliverable
+Provide a structured inventory organized by:
+1. Project directory
+2. File path and type
+3. Content type (code, documentation, configuration, etc.)
+4. Specific SCRUM concepts found
+5. Brief description of the context/usage
+
+Use multiple targeted codebase-retrieval queries to ensure comprehensive coverage across all specified project directories.
+
+-------================-----------------=======================-------------------------===============------======------======--------======--------=========---------=========---------========--------========--------======
+
+I need architectural guidance for extending an MVP SCRUM automation system that abstracts away project management overhead while maintaining structured benefits. Based on our conversation history about the SCRUM ecosystem analysis, orchestr8r-mcp capabilities, and conversation management system, please provide specific technical recommendations.
+
+**Context & Scope**:
+- Building on existing orchestr8r-mcp foundation (29 tools, 6 prompts for GitHub Projects V2)
+- Conversation management system serves as initial 360SOT implementation (~20% of eventual vision)
+- Target user: Solo developer (myself) for iterative development and validation
+- Focus: Short-lived SCRUM tickets (epic → task → chore granularity)
+
+**Core Value Proposition**:
+Create an opinionated MCP tool that eliminates SCRUM overhead through automation:
+1. **One-time setup**: Automated SCRUM project creation and configuration
+2. **Invisible ongoing management**: Git commits, PR management, and project updates happen automatically within conversation workflows
+3. **Abstraction without loss**: Hide SCRUM complexity while preserving organizational benefits for future tooling
+
+**Specific Architectural Questions Requiring Technical Solutions**:
+
+1. **Project Detection & Integration**:
+   - How should fitb CLI discover and integrate with existing projects in `/Users/LenMiller/code/banno/`?
+   - What's the optimal strategy for leveraging orchestr8r-mcp's existing GitHub Projects V2 capabilities?
+   - Should we use file system scanning, git repository analysis, or existing project metadata?
+
+2. **SCRUM Abstraction Layer Design**:
+   - What architectural patterns best hide SCRUM complexity while maintaining underlying structure?
+   - How do we design APIs that allow other tools to access SCRUM data without exposing complexity to developers?
+   - What's the optimal separation between user-facing commands and internal SCRUM operations?
+
+3. **Artifact Demarcation & Accessibility**:
+   - How should we structure and tag SCRUM artifacts for machine readability while keeping them developer-invisible?
+   - What metadata schemas ensure other systems can discover and utilize SCRUM boundaries?
+   - How do we maintain clean separation between developer workspace and project management artifacts?
+
+4. **Conversation-to-SCRUM Translation Architecture**:
+   - What parsing and interpretation strategies can extract SCRUM-relevant information from conversation snapshots?
+   - How do we design the translation layer between natural language work descriptions and formal SCRUM artifacts?
+   - What's the optimal approach for maintaining bidirectional sync between conversations and GitHub Projects?
+
+**Required Deliverables**:
+- Specific implementation strategies for each architectural question
+- Technical recommendations considering our existing codebase (orchestr8r-mcp, conversation management system)
+- Concrete next steps for MVP development prioritization
+- Integration patterns that support the fitb CLI vision while building toward the larger SCRUM ecosystem
+
+Please provide actionable technical guidance that enables immediate MVP development while establishing foundation for the broader vision.
+
+-------================-----------------=======================-------------------------===============------======------======--------======--------=========---------=========---------========--------========--------======
+
+
+-------================-----------------=======================-------------------------===============------======------======--------======--------=========---------=========---------========--------========--------======
+
+I'm excited about your persistent context tracker architectural proposal! Please conduct a comprehensive analysis by examining ALL existing architectural documentation and plans within the orchestr8r-mcp project structure. Specifically, read and analyze all markdown files in the orchestr8r-mcp directory, paying particular attention to:
+
+- `ARCHITECTURE.md` - Current architectural patterns and future vision
+- `docs/development/roadmap.md` - Existing Sprint 2-4 roadmap and v2.0-v4.0 milestones
+- `docs/guides/` - Current workflow patterns and automation approaches
+- `README.md` - Current capabilities and positioning
+- Any other architectural or planning documentation
+
+After thoroughly reviewing the existing architectural foundation, create a comprehensive architectural specification document that formally captures our persistent context tracker proposal as a v1.0 design specification. The document should demonstrate how the context tracker enhances rather than replaces existing orchestr8r-mcp capabilities.
+
+Save this document to `docs/architecture/persistent-context-tracker-v1.0.md` and structure it as a formal Architectural Decision Record (ADR) that includes:
+
+1. **Executive Summary** - Core value proposition and strategic alignment with existing orchestr8r-mcp vision
+2. **Current State Analysis** - Assessment of existing architecture and identification of integration points
+3. **Proposed Architecture** - Detailed design of WorkingContext interface, ContextStore service, and context-aware tool enhancements
+4. **Integration Specifications** - Concrete examples showing conversation management ↔ git workflow ↔ SCRUM automation synergies
+5. **Technical Implementation** - Complete API specifications for new tools (`set-working-context`, `get-working-context`, `analyze-conversation-with-context`) and enhanced existing tools
+6. **POC Roadmap** - 3-phase implementation strategy with specific deliverables, timelines, and success criteria
+7. **Architectural Challenges & Mitigation** - Solutions for state persistence, context synchronization, staleness handling, and backward compatibility
+8. **Roadmap Integration** - Explicit mapping to existing Sprint 2-4 milestones and v2.0-v4.0 evolution path
+9. **Success Metrics** - Measurable outcomes that validate the context tracker's value
+10. **Future Considerations** - How this foundation enables the planned natural language interface and AODL vision
+
+Ensure the document maintains consistency with existing orchestr8r-mcp terminology, architectural patterns, and strategic direction while clearly articulating how persistent context tracking transforms the developer experience from manual project management to "invisible SCRUM" automation.
+-------================-----------------=======================-------------------------===============------======------======--------======--------=========---------=========---------========--------========--------======
+
+
+-------================-----------------=======================-------------------------===============------======------======--------======--------=========---------=========---------========--------========--------======
+
+
+-------================-----------------=======================-------------------------===============------======------======--------======--------=========---------=========---------========--------========--------======
+
+
+-------================-----------------=======================-------------------------===============------======------======--------======--------=========---------=========---------========--------========--------======
+
+
+-------================-----------------=======================-------------------------===============------======------======--------======--------=========---------=========---------========--------========--------======
+
+
+-------================-----------------=======================-------------------------===============------======------======--------======--------=========---------=========---------========--------========--------======

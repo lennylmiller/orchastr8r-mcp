@@ -1,0 +1,27 @@
+docs
+├── api
+│   └── tools.md
+├── application-review.md
+├── development
+│   ├── architecture-analysis.md
+│   └── roadmap.md
+├── examples
+│   └── morning-standup.md
+├── getting-started
+│   ├── installation.md
+│   └── quick-start.md
+├── guides
+│   ├── automation-scripts.md
+│   ├── automation-workflows.md
+│   ├── claude-integration.md
+│   ├── debugging.md
+│   ├── morning-standup.md
+│   └── sprint-management.md
+├── README.md
+└── reference
+    ├── api
+    └── tools
+        ├── issue-tools.md
+        └── project-tools.md
+
+9 directories, 16 files
